@@ -13,9 +13,30 @@
 
     <main class="dashboard-main">
         <section class="card">
+            <h2>Codeforces Account</h2>
+            {% if user.codeforces_handle %}
+                <p>Linked handle: <strong>{{ user.codeforces_handle }}</strong>
+                {% if user.cf_rating %} (Rating: {{ user.cf_rating }}){% endif %}</p>
+            {% else %}
+                <p>No Codeforces handle linked yet.</p>
+            {% endif %}
+
+            <form id="cf-sync-form">
+                <input type="text" id="cf-handle-input" placeholder="Enter your Codeforces handle"
+                       value="{{ user.codeforces_handle or '' }}">
+                <button type="submit" id="cf-sync-btn">Link &amp; Sync</button>
+            </form>
+            <p id="cf-sync-message"></p>
+        </section>
+
+        <section class="card">
             <h2>Welcome to your dashboard</h2>
-            <p>Contest building and Codeforces sync coming soon.</p>
+            <p>Contest building coming soon.</p>
         </section>
     </main>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}

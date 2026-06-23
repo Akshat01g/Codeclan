@@ -1,8 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
 from config import DB_CONFIG, SECRET_KEY
+from services import codeforces_api
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
@@ -97,6 +99,53 @@ def dashboard():
     conn.close()
 
     return render_template("dashboard.html", user=user)
+
+
+@app.route("/sync-codeforces", methods=["POST"])
+def sync_codeforces():
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Please login first."})
+
+    handle = request.form.get("handle", "").strip()
+    if not handle:
+        return jsonify({"success": False, "message": "Please enter a Codeforces handle."})
+
+    try:
+        user_info = codeforces_api.fetch_user_info(handle)
+        solved = codeforces_api.fetch_user_solved_problems(handle)
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "UPDATE users SET codeforces_handle = %s, cf_rating = %s, cf_last_synced = %s WHERE id = %s",
+        (user_info["handle"], user_info["rating"], datetime.now(), session["user_id"])
+    )
+
+    cursor.execute("DELETE FROM solved_problems WHERE user_id = %s", (session["user_id"],))
+
+    insert_query = """
+        INSERT INTO solved_problems (user_id, problem_key, contest_id, problem_index, problem_name)
+        VALUES (%s, %s, %s, %s, %s)
+    """
+    rows = [
+        (session["user_id"], p["problem_key"], p["contestId"], p["index"], p["name"])
+        for p in solved
+    ]
+    if rows:
+        cursor.executemany(insert_query, rows)
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({
+        "success": True,
+        "message": f"Synced! Handle: {user_info['handle']} (rating: {user_info['rating']}). "
+                    f"{len(solved)} solved problems cached."
+    })
 
 
 if __name__ == "__main__":
