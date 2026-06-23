@@ -5,3 +5,5 @@ DB_CONFIG = {
     "database": "codeclan_db",
     "port": 3306,
 }
+
+SECRET_KEY = "kj3h9f8sd7f6g5h4j3k2l1mnbvcxz9876543210"

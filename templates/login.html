@@ -6,6 +6,10 @@
     <div class="auth-card">
         <h1>Login</h1>
 
+        {% if error %}
+        <p style="color: red;">{{ error }}</p>
+        {% endif %}
+
         <form method="POST" action="/login">
             <div class="form-group">
                 <label for="username">Username or Email</label>

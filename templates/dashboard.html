@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="app-shell">
+    <nav class="navbar">
+        <div class="navbar-brand">Codeclan</div>
+        <div class="navbar-right">
+            <span>Hi, {{ user.username }}</span>
+            <a href="/logout">Logout</a>
+        </div>
+    </nav>
+
+    <main class="dashboard-main">
+        <section class="card">
+            <h2>Welcome to your dashboard</h2>
+            <p>Contest building and Codeforces sync coming soon.</p>
+        </section>
+    </main>
+</div>
+{% endblock %}
