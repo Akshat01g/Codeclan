@@ -3,6 +3,31 @@ import requests
 CF_API_BASE = "https://codeforces.com/api"
 
 
+def fetch_all_problems():
+    
+    url = f"{CF_API_BASE}/problemset.problems"
+    resp = requests.get(url, timeout=15)
+    resp.raise_for_status()
+    data = resp.json()
+
+    if data.get("status") != "OK":
+        raise Exception("Codeforces API error: " + str(data.get("comment")))
+
+    problems = data["result"]["problems"]
+    cleaned = []
+    for p in problems:
+        if "rating" not in p:
+            continue
+        cleaned.append({
+            "contestId": p.get("contestId"),
+            "index": p.get("index"),
+            "name": p.get("name"),
+            "rating": p.get("rating"),
+            "tags": p.get("tags", []),
+        })
+    return cleaned
+
+
 def fetch_user_solved_problems(handle):
     url = f"{CF_API_BASE}/user.status"
     params = {"handle": handle, "from": 1, "count": 10000}
