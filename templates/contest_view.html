@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ contest.title }}{% endblock %}
+
+{% block content %}
+<div class="app-shell">
+    <nav class="navbar">
+        <div class="navbar-brand">Codeclan</div>
+        <div class="navbar-right">
+            <a href="/dashboard">Back to Dashboard</a>
+        </div>
+    </nav>
+
+    <main class="dashboard-main">
+        <section class="card">
+            <h2>{{ contest.title }}</h2>
+            <p>Rating: {{ contest.rating_min }} - {{ contest.rating_max }}
+               {% if contest.topics %} &middot; Topics: {{ contest.topics }}{% endif %}</p>
+
+            <table>
+                <thead>
+                    <tr><th>#</th><th>Problem</th><th>Rating</th><th>Tags</th><th></th></tr>
+                </thead>
+                <tbody>
+                    {% for p in problems %}
+                    <tr>
+                        <td>{{ p.position_in_contest }}</td>
+                        <td>{{ p.problem_name }} ({{ p.contest_cf_id }}{{ p.problem_index }})</td>
+                        <td>{{ p.rating }}</td>
+                        <td>{{ p.tags }}</td>
+                        <td><a href="{{ p.problem_url }}" target="_blank">Solve on CF</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </main>
+</div>
+{% endblock %}

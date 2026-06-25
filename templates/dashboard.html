@@ -30,8 +30,32 @@
         </section>
 
         <section class="card">
-            <h2>Welcome to your dashboard</h2>
-            <p>Contest building coming soon.</p>
+            <h2>Build a Contest</h2>
+            <p>Pick a rating range and topics. We'll generate questions you haven't solved.</p>
+            <a href="/create-contest">Create a contest</a>
+        </section>
+
+        <section class="card">
+            <h2>Your Contests</h2>
+            {% if contests %}
+            <table>
+                <thead>
+                    <tr><th>Title</th><th>Rating Range</th><th>Created</th><th></th></tr>
+                </thead>
+                <tbody>
+                    {% for c in contests %}
+                    <tr>
+                        <td>{{ c.title }}</td>
+                        <td>{{ c.rating_min }} - {{ c.rating_max }}</td>
+                        <td>{{ c.created_at }}</td>
+                        <td><a href="/contest/{{ c.id }}">View</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No contests created yet.</p>
+            {% endif %}
         </section>
     </main>
 </div>
@@ -40,4 +64,3 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}
-
