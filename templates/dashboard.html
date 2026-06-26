@@ -1,62 +1,87 @@
 {% extends "base.html" %}
-{% block title %}Dashboard{% endblock %}
+{% block title %}Dashboard - Codeclan{% endblock %}
 
 {% block content %}
 <div class="app-shell">
     <nav class="navbar">
         <div class="navbar-brand">Codeclan</div>
         <div class="navbar-right">
-            <span>Hi, {{ user.username }}</span>
-            <a href="/logout">Logout</a>
+            <span class="navbar-user">Hi, {{ user.username }}</span>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline btn-small">Logout</a>
         </div>
     </nav>
 
     <main class="dashboard-main">
-        <section class="card">
+
+        <section class="card cf-card">
             <h2>Codeforces Account</h2>
             {% if user.codeforces_handle %}
-                <p>Linked handle: <strong>{{ user.codeforces_handle }}</strong>
-                {% if user.cf_rating %} (Rating: {{ user.cf_rating }}){% endif %}</p>
+                <p class="cf-status">
+                    Linked handle: <strong>{{ user.codeforces_handle }}</strong>
+                    {% if user.cf_rating %} &middot; Rating: <strong>{{ user.cf_rating }}</strong>{% endif %}
+                </p>
+                <p class="cf-synced">
+                    Last synced: {{ user.cf_last_synced if user.cf_last_synced else "Never" }}
+                </p>
             {% else %}
-                <p>No Codeforces handle linked yet.</p>
+                <p class="cf-status">No Codeforces handle linked yet. Link one to start creating contests.</p>
             {% endif %}
 
-            <form id="cf-sync-form">
-                <input type="text" id="cf-handle-input" placeholder="Enter your Codeforces handle"
+            <form id="cf-sync-form" class="cf-sync-form">
+                <input type="text" id="cf-handle-input" name="handle"
+                       placeholder="Enter your Codeforces handle"
                        value="{{ user.codeforces_handle or '' }}">
-                <button type="submit" id="cf-sync-btn">Link &amp; Sync</button>
+                <button type="submit" class="btn btn-primary" id="cf-sync-btn">
+                    {% if user.codeforces_handle %}Re-sync{% else %}Link &amp; Sync{% endif %}
+                </button>
             </form>
-            <p id="cf-sync-message"></p>
+            <div id="cf-sync-message" class="cf-sync-message"></div>
         </section>
 
-        <section class="card">
-            <h2>Build a Contest</h2>
-            <p>Pick a rating range and topics. We'll generate questions you haven't solved.</p>
-            <a href="/create-contest">Create a contest</a>
+        <section class="action-grid">
+            <a href="{{ url_for('create_contest_page') }}" class="card action-card">
+                <h3>Build a Contest</h3>
+                <p>Pick a rating range and topics. We'll generate 5-7 problems you haven't solved before.</p>
+                <span class="action-arrow">Create →</span>
+            </a>
+
+            <div class="card action-card action-card-disabled">
+                <h3>Teams</h3>
+                <p>Create or join a team..</p>
+                <span class="action-arrow">Coming soon</span>
+            </div>
         </section>
 
         <section class="card">
             <h2>Your Contests</h2>
             {% if contests %}
-            <table>
+            <table class="contest-table">
                 <thead>
-                    <tr><th>Title</th><th>Rating Range</th><th>Created</th><th></th></tr>
+                    <tr>
+                        <th>Title</th>
+                        <th>Rating Range</th>
+                        <th>Questions</th>
+                        <th>Created</th>
+                        <th></th>
+                    </tr>
                 </thead>
                 <tbody>
                     {% for c in contests %}
                     <tr>
                         <td>{{ c.title }}</td>
                         <td>{{ c.rating_min }} - {{ c.rating_max }}</td>
+                        <td>{{ c.num_questions }}</td>
                         <td>{{ c.created_at }}</td>
-                        <td><a href="/contest/{{ c.id }}">View</a></td>
+                        <td><a href="{{ url_for('view_contest', contest_id=c.id) }}" class="btn btn-small btn-outline">View</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
             {% else %}
-            <p>No contests created yet.</p>
+            <p class="empty-state">No contests created yet. Build your first one above!</p>
             {% endif %}
         </section>
+
     </main>
 </div>
 {% endblock %}

@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+import functools
 
 from config import DB_CONFIG, SECRET_KEY
 from services import codeforces_api
@@ -10,9 +11,16 @@ from services import contest_generator
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
 
-
 def get_db_connection():
     return mysql.connector.connect(**DB_CONFIG)
+
+def login_required(view_func):
+    @functools.wraps(view_func)
+    def wrapped(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+        return view_func(*args, **kwargs)
+    return wrapped
 
 
 @app.route("/")
@@ -27,9 +35,10 @@ def signup():
     if request.method == "GET":
         return render_template("signup.html")
 
-    username = request.form.get("username", "").strip()
-    email = request.form.get("email", "").strip()
-    password = request.form.get("password", "")
+    data = request.form
+    username = data.get("username", "").strip()
+    email = data.get("email", "").strip()
+    password = data.get("password", "")
 
     if not username or not email or not password:
         return render_template("signup.html", error="All fields are required.")
@@ -52,16 +61,18 @@ def signup():
         cursor.close()
         conn.close()
 
-    return redirect(url_for("login"))
+    return redirect(url_for("login", signup_success=1))
 
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "GET":
-        return render_template("login.html")
+        signup_success = request.args.get("signup_success")
+        return render_template("login.html", signup_success=signup_success)
 
-    username_or_email = request.form.get("username", "").strip()
-    password = request.form.get("password", "")
+    data = request.form
+    username_or_email = data.get("username", "").strip()
+    password = data.get("password", "")
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -88,10 +99,8 @@ def logout():
 
 
 @app.route("/dashboard")
+@login_required
 def dashboard():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM users WHERE id = %s", (session["user_id"],))
@@ -109,11 +118,10 @@ def dashboard():
     return render_template("dashboard.html", user=user, contests=contests)
 
 
-@app.route("/sync-codeforces", methods=["POST"])
-def sync_codeforces():
-    if "user_id" not in session:
-        return jsonify({"success": False, "message": "Please login first."})
 
+@app.route("/sync-codeforces", methods=["POST"])
+@login_required
+def sync_codeforces():
     handle = request.form.get("handle", "").strip()
     if not handle:
         return jsonify({"success": False, "message": "Please enter a Codeforces handle."})
@@ -131,6 +139,7 @@ def sync_codeforces():
         "UPDATE users SET codeforces_handle = %s, cf_rating = %s, cf_last_synced = %s WHERE id = %s",
         (user_info["handle"], user_info["rating"], datetime.now(), session["user_id"])
     )
+
 
     cursor.execute("DELETE FROM solved_problems WHERE user_id = %s", (session["user_id"],))
 
@@ -156,11 +165,9 @@ def sync_codeforces():
     })
 
 
-@app.route("/create-contest")
+@app.route("/create-contest", methods=["GET"])
+@login_required
 def create_contest_page():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM users WHERE id = %s", (session["user_id"],))
@@ -171,17 +178,18 @@ def create_contest_page():
 
 
 @app.route("/api/generate-contest", methods=["POST"])
+@login_required
 def generate_contest():
-    if "user_id" not in session:
-        return jsonify({"success": False, "message": "Please login first."})
-
     payload = request.get_json()
+
     title = payload.get("title", "").strip() or "Untitled Contest"
     rating_min = int(payload.get("rating_min", 800))
     rating_max = int(payload.get("rating_max", 1200))
-    topics = payload.get("topics", [])
+    topics = payload.get("topics", []) 
     num_questions = int(payload.get("num_questions", 5))
-    num_questions = max(5, min(7, num_questions))
+
+    if num_questions < 5 or num_questions > 7:
+        num_questions = max(5, min(7, num_questions))
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -194,7 +202,8 @@ def generate_contest():
         return jsonify({"success": False, "message": "Please link your Codeforces handle first."})
 
     cursor.execute("SELECT problem_key FROM solved_problems WHERE user_id = %s", (session["user_id"],))
-    solved_keys = set(row["problem_key"] for row in cursor.fetchall())
+    solved_rows = cursor.fetchall()
+    solved_keys = set(row["problem_key"] for row in solved_rows)
 
     try:
         all_problems = codeforces_api.fetch_all_problems()
@@ -208,20 +217,20 @@ def generate_contest():
 
     cursor2 = conn.cursor()
     cursor2.execute(
-        """INSERT INTO contests (title, owner_user_id, rating_min, rating_max, topics, num_questions)
-           VALUES (%s, %s, %s, %s, %s, %s)""",
+        """INSERT INTO contests (title, owner_type, owner_user_id, rating_min, rating_max, topics, num_questions)
+           VALUES (%s, 'individual', %s, %s, %s, %s, %s)""",
         (title, session["user_id"], rating_min, rating_max, ",".join(topics), num_questions)
     )
     contest_id = cursor2.lastrowid
 
-    insert_query = """
+    insert_problem_query = """
         INSERT INTO contest_problems
             (contest_id, contest_cf_id, problem_index, problem_name, rating, tags, problem_url, position_in_contest)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     """
     for i, p in enumerate(chosen, start=1):
         url = f"https://codeforces.com/problemset/problem/{p['contestId']}/{p['index']}"
-        cursor2.execute(insert_query, (
+        cursor2.execute(insert_problem_query, (
             contest_id, p["contestId"], p["index"], p["name"], p["rating"],
             ",".join(p.get("tags", [])), url, i
         ))
@@ -235,10 +244,8 @@ def generate_contest():
 
 
 @app.route("/contest/<int:contest_id>")
+@login_required
 def view_contest(contest_id):
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 

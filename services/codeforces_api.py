@@ -1,10 +1,8 @@
 import requests
-
-CF_API_BASE = "https://codeforces.com/api"
-
+from config import CF_API_BASE
 
 def fetch_all_problems():
-    
+
     url = f"{CF_API_BASE}/problemset.problems"
     resp = requests.get(url, timeout=15)
     resp.raise_for_status()
@@ -29,6 +27,7 @@ def fetch_all_problems():
 
 
 def fetch_user_solved_problems(handle):
+
     url = f"{CF_API_BASE}/user.status"
     params = {"handle": handle, "from": 1, "count": 10000}
     resp = requests.get(url, params=params, timeout=20)
@@ -60,6 +59,7 @@ def fetch_user_solved_problems(handle):
 
 
 def fetch_user_info(handle):
+
     url = f"{CF_API_BASE}/user.info"
     params = {"handles": handle}
     resp = requests.get(url, params=params, timeout=15)
@@ -73,4 +73,5 @@ def fetch_user_info(handle):
     return {
         "handle": result.get("handle"),
         "rating": result.get("rating", 0),
+        "rank": result.get("rank", "unrated"),
     }

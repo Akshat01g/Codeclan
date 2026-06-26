@@ -110,7 +110,7 @@ a {
     letter-spacing: -0.5px;
 }
 .auth-title::before {
-    content: "$ ";
+    content: "";
     color: var(--accent);
 }
 

@@ -2,7 +2,7 @@ import random
 
 def generate_contest_problems(all_problems, solved_keys, rating_min, rating_max,
                                 topics, num_questions):
-    
+
     topics_lower = set(t.strip().lower() for t in topics) if topics else None
 
     eligible = []
@@ -20,10 +20,10 @@ def generate_contest_problems(all_problems, solved_keys, rating_min, rating_max,
 
     if len(eligible) < num_questions:
         raise ValueError(
-            f"Only {len(eligible)} eligible problems found, but {num_questions} "
-            f"were requested. Try widening the rating range or topics."
+            f"Only {len(eligible)} eligible (unsolved, matching) problems found, "
+            f"but {num_questions} were requested. Try widening the rating range "
+            f"or choosing fewer/different topics."
         )
-
     random.shuffle(eligible)
     chosen = eligible[:num_questions]
     chosen.sort(key=lambda p: p["rating"])

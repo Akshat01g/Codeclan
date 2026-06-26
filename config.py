@@ -1,3 +1,4 @@
+import os
 DB_CONFIG = {
     "host": "localhost",
     "user": "root",
@@ -7,3 +8,4 @@ DB_CONFIG = {
 }
 
 SECRET_KEY = "kj3h9f8sd7f6g5h4j3k2l1mnbvcxz9876543210"
+CF_API_BASE = "https://codeforces.com/api"

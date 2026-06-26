@@ -10,13 +10,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const handle = document.getElementById("cf-handle-input").value.trim();
         if (!handle) {
-            messageBox.textContent = "Please enter a Codeforces handle.";
+            showMessage("Please enter a Codeforces handle.", "error");
             return;
         }
 
         syncBtn.disabled = true;
-        syncBtn.textContent = "Syncing...";
-        messageBox.textContent = "Fetching data from Codeforces...";
+        syncBtn.textContent = "Syncing";
+        showMessage("Fetching data from Codeforces, this may take a few seconds", "");
 
         try {
             const formData = new FormData();
@@ -28,16 +28,22 @@ document.addEventListener("DOMContentLoaded", function () {
             });
             const data = await response.json();
 
-            messageBox.textContent = data.message;
-
             if (data.success) {
+                showMessage(data.message, "success");
                 setTimeout(() => window.location.reload(), 1200);
+            } else {
+                showMessage(data.message, "error");
             }
         } catch (err) {
-            messageBox.textContent = "Something went wrong while syncing.";
+            showMessage("Something went wrong while syncing.Try again.", "error");
         } finally {
             syncBtn.disabled = false;
             syncBtn.textContent = "Re-sync";
         }
     });
+
+    function showMessage(text, type) {
+        messageBox.textContent = text;
+        messageBox.className = "cf-sync-message" + (type ? " " + type : "");
+    }
 });

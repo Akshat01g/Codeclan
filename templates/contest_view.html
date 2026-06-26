@@ -1,33 +1,42 @@
 {% extends "base.html" %}
-{% block title %}{{ contest.title }}{% endblock %}
+{% block title %}{{ contest.title }} - Codeclan{% endblock %}
 
 {% block content %}
 <div class="app-shell">
     <nav class="navbar">
         <div class="navbar-brand">Codeclan</div>
         <div class="navbar-right">
-            <a href="/dashboard">Back to Dashboard</a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline btn-small">← Back to Dashboard</a>
         </div>
     </nav>
 
     <main class="dashboard-main">
         <section class="card">
             <h2>{{ contest.title }}</h2>
-            <p>Rating: {{ contest.rating_min }} - {{ contest.rating_max }}
-               {% if contest.topics %} &middot; Topics: {{ contest.topics }}{% endif %}</p>
+            <p class="contest-meta">
+                Rating: {{ contest.rating_min }} - {{ contest.rating_max }}
+                {% if contest.topics %} &middot; Topics: {{ contest.topics }}{% endif %}
+                &middot; {{ contest.num_questions }} questions
+            </p>
 
-            <table>
+            <table class="contest-table problems-table">
                 <thead>
-                    <tr><th>#</th><th>Problem</th><th>Rating</th><th>Tags</th><th></th></tr>
+                    <tr>
+                        <th>#</th>
+                        <th>Problem</th>
+                        <th>Rating</th>
+                        <th>Tags</th>
+                        <th></th>
+                    </tr>
                 </thead>
                 <tbody>
                     {% for p in problems %}
                     <tr>
                         <td>{{ p.position_in_contest }}</td>
                         <td>{{ p.problem_name }} ({{ p.contest_cf_id }}{{ p.problem_index }})</td>
-                        <td>{{ p.rating }}</td>
-                        <td>{{ p.tags }}</td>
-                        <td><a href="{{ p.problem_url }}" target="_blank">Solve on CF</a></td>
+                        <td><span class="rating-badge">{{ p.rating }}</span></td>
+                        <td class="tags-cell">{{ p.tags }}</td>
+                        <td><a href="{{ p.problem_url }}" target="_blank" class="btn btn-small btn-primary">Solve on CF</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>

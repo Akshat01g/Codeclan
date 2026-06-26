@@ -1,40 +1,45 @@
 {% extends "base.html" %}
-{% block title %}Build a Contest{% endblock %}
+{% block title %}Build a Contest - Codeclan{% endblock %}
 
 {% block content %}
 <div class="app-shell">
     <nav class="navbar">
         <div class="navbar-brand">Codeclan</div>
         <div class="navbar-right">
-            <a href="/dashboard">Back to Dashboard</a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline btn-small">← Back to Dashboard</a>
         </div>
     </nav>
 
     <main class="dashboard-main">
-        <section class="card">
+        <section class="card contest-form-card">
             <h2>Build a New Contest</h2>
 
             {% if not user.codeforces_handle %}
-            <p style="color:red;">link your Codeforces handle from the dashboard first.</p>
+            <div class="alert alert-error">
+                You haven't linked a Codeforces handle yet. Please go back to the dashboard and link it first.
+            </div>
             {% endif %}
 
             <div class="form-group">
                 <label for="title">Contest Title</label>
-                <input type="text" id="title" placeholder="e.g. Fun Practice contest">
+                <input type="text" id="title" placeholder="e.g. My Sunday Practice Set">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="rating_min">Min Rating</label>
+                    <select id="rating_min"></select>
+                </div>
+                <div class="form-group">
+                    <label for="rating_max">Max Rating</label>
+                    <select id="rating_max"></select>
+                </div>
             </div>
 
             <div class="form-group">
-                <label for="rating_min">Min Rating</label>
-                <select id="rating_min"></select>
-            </div>
-            <div class="form-group">
-                <label for="rating_max">Max Rating</label>
-                <select id="rating_max"></select>
-            </div>
-
-            <div class="form-group">
-                <label>Topics</label>
-                <div id="topics-grid"></div>
+                <label>Topics <span class="label-hint">(select one or more, or leave empty for any)</span></label>
+                <div class="topics-grid" id="topics-grid">
+                </div>
             </div>
 
             <div class="form-group">
@@ -46,10 +51,11 @@
                 </select>
             </div>
 
-            <button id="generate-btn" {% if not user.codeforces_handle %}disabled{% endif %}>
+            <button id="generate-btn" class="btn btn-primary btn-full" {% if not user.codeforces_handle %}disabled{% endif %}>
                 Generate Contest
             </button>
-            <p id="generate-message"></p>
+
+            <div id="generate-message" class="cf-sync-message"></div>
         </section>
     </main>
 </div>

@@ -105,3 +105,8 @@ async function handleGenerate() {
         btn.textContent = "Generate Contest";
     }
 }
+
+function showMessage(box, text, type) {
+    box.textContent = text;
+    box.className = "cf-sync-message" + (type ? " " + type : "");
+}
