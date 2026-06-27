@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Create a Team - Codeclan{% endblock %}
+
+{% block content %}
+<div class="app-shell">
+    <nav class="navbar">
+        <div class="navbar-brand">Codeclan</div>
+        <div class="navbar-right">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline btn-small">← Back to Dashboard</a>
+        </div>
+    </nav>
+
+    <main class="dashboard-main">
+        <section class="card">
+            <h2>Create a Team</h2>
+            <p class="cf-status">Teams can have 3-4 members in total, including you as the leader.</p>
+
+            {% if error %}
+            <div class="alert alert-error">{{ error }}</div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('create_team') }}" class="auth-form">
+                <div class="form-group">
+                    <label for="team_name">Team Name</label>
+                    <input type="text" id="team_name" name="team_name" placeholder="e.g. Byte Busters" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">Create Team</button>
+            </form>
+        </section>
+    </main>
+</div>
+{% endblock %}

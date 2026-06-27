@@ -11,8 +11,10 @@ from services import contest_generator
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
 
+
 def get_db_connection():
     return mysql.connector.connect(**DB_CONFIG)
+
 
 def login_required(view_func):
     @functools.wraps(view_func)
@@ -118,6 +120,36 @@ def dashboard():
     return render_template("dashboard.html", user=user, contests=contests)
 
 
+@app.route("/create-team", methods=["GET", "POST"])
+@login_required
+def create_team():
+    if request.method == "GET":
+        return render_template("create_team.html")
+
+    team_name = request.form.get("team_name", "").strip()
+    if not team_name:
+        return render_template("create_team.html", error="Team name is required.")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "INSERT INTO teams (team_name, leader_id) VALUES (%s, %s)",
+        (team_name, session["user_id"])
+    )
+    team_id = cursor.lastrowid
+
+    cursor.execute(
+        "INSERT INTO team_members (team_id, user_id) VALUES (%s, %s)",
+        (team_id, session["user_id"])
+    )
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return redirect(url_for("dashboard"))
+
 
 @app.route("/sync-codeforces", methods=["POST"])
 @login_required
@@ -139,7 +171,6 @@ def sync_codeforces():
         "UPDATE users SET codeforces_handle = %s, cf_rating = %s, cf_last_synced = %s WHERE id = %s",
         (user_info["handle"], user_info["rating"], datetime.now(), session["user_id"])
     )
-
 
     cursor.execute("DELETE FROM solved_problems WHERE user_id = %s", (session["user_id"],))
 
@@ -185,7 +216,7 @@ def generate_contest():
     title = payload.get("title", "").strip() or "Untitled Contest"
     rating_min = int(payload.get("rating_min", 800))
     rating_max = int(payload.get("rating_max", 1200))
-    topics = payload.get("topics", []) 
+    topics = payload.get("topics", [])
     num_questions = int(payload.get("num_questions", 5))
 
     if num_questions < 5 or num_questions > 7:
