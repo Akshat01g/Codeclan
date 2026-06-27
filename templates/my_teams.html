@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}My Teams - Codeclan{% endblock %}
+
+{% block content %}
+<div class="app-shell">
+    <nav class="navbar">
+        <div class="navbar-brand">Codeclan</div>
+        <div class="navbar-right">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline btn-small">← Back to Dashboard</a>
+        </div>
+    </nav>
+
+    <main class="dashboard-main">
+        <section class="card">
+            <h2>My Teams</h2>
+
+            {% if teams %}
+                {% for team in teams %}
+                <div class="team-block">
+                    <h3>{{ team.team_name }}</h3>
+                    <p class="cf-status">
+                        {% if team.leader_id == user.id %}You are the leader{% else %}Member{% endif %}
+                        &middot; {{ team.member_count }}/4 members
+                    </p>
+
+                    {% if team.leader_id == user.id and team.member_count < 4 %}
+                    <form method="POST" action="{{ url_for('invite_to_team', team_id=team.id) }}" class="cf-sync-form">
+                        <input type="text" name="username" placeholder="Username to invite">
+                        <button type="submit" class="btn btn-primary btn-small">Send Invite</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+            <p class="empty-state">You're not part of any team yet.</p>
+            {% endif %}
+
+            <a href="{{ url_for('create_team') }}" class="btn btn-outline">Create another team</a>
+        </section>
+    </main>
+</div>
+{% endblock %}

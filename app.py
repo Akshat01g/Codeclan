@@ -148,7 +148,72 @@ def create_team():
     cursor.close()
     conn.close()
 
-    return redirect(url_for("dashboard"))
+    return redirect(url_for("my_teams"))
+
+
+@app.route("/my-teams")
+@login_required
+def my_teams():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("SELECT * FROM users WHERE id = %s", (session["user_id"],))
+    user = cursor.fetchone()
+
+    cursor.execute("""
+        SELECT t.*, (SELECT COUNT(*) FROM team_members tm WHERE tm.team_id = t.id) AS member_count
+        FROM teams t
+        JOIN team_members tm ON tm.team_id = t.id
+        WHERE tm.user_id = %s
+        ORDER BY t.created_at DESC
+    """, (session["user_id"],))
+    teams = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return render_template("my_teams.html", user=user, teams=teams)
+
+
+@app.route("/team/<int:team_id>/invite", methods=["POST"])
+@login_required
+def invite_to_team(team_id):
+    username = request.form.get("username", "").strip()
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("SELECT * FROM teams WHERE id = %s", (team_id,))
+    team = cursor.fetchone()
+
+    if not team or team["leader_id"] != session["user_id"]:
+        cursor.close()
+        conn.close()
+        return redirect(url_for("my_teams"))
+
+    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+    invited_user = cursor.fetchone()
+
+    if invited_user:
+        cursor.execute(
+            "SELECT * FROM team_invites WHERE team_id = %s AND invited_user_id = %s AND status = 'pending'",
+            (team_id, invited_user["id"])
+        )
+        existing_invite = cursor.fetchone()
+
+        if not existing_invite:
+            cursor2 = conn.cursor()
+            cursor2.execute(
+                "INSERT INTO team_invites (team_id, invited_user_id, invited_by_user_id) VALUES (%s, %s, %s)",
+                (team_id, invited_user["id"], session["user_id"])
+            )
+            conn.commit()
+            cursor2.close()
+
+    cursor.close()
+    conn.close()
+
+    return redirect(url_for("my_teams"))
 
 
 @app.route("/sync-codeforces", methods=["POST"])
