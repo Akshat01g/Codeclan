@@ -5,7 +5,7 @@
     --border:       #f0e2a8;
     --text-main:    #3a3422;
     --text-dim:     #8a7f5c;
-    --accent:       #e6a817;     
+    --accent:       #e6a817;
     --accent-dim:   #c98f0e;
     --accent-soft:  rgba(230, 168, 23, 0.14);
     --danger:       #d6483c;
@@ -61,7 +61,6 @@ a {
 
 .btn-full { width: 100%; }
 .btn-small { padding: 6px 12px; font-size: 13px; }
-
 
 .alert {
     padding: 12px 14px;
@@ -202,7 +201,6 @@ input:focus, select:focus {
     gap: 24px;
 }
 
-
 .card {
     background: var(--bg-panel);
     border: 1px solid var(--border);
@@ -233,7 +231,6 @@ input:focus, select:focus {
 }
 .cf-sync-message.success { color: var(--accent); }
 .cf-sync-message.error { color: var(--danger); }
-
 
 .action-grid {
     display: grid;
@@ -278,7 +275,6 @@ input:focus, select:focus {
     cursor: not-allowed;
 }
 .action-card-disabled .action-arrow { color: var(--text-dim); }
-
 
 .contest-table {
     width: 100%;
@@ -355,4 +351,23 @@ input:focus, select:focus {
 }
 .topic-chip:hover {
     border-color: var(--accent);
+}
+
+.team-block {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    background: var(--bg-panel-alt);
+}
+.team-block h3 {
+    margin: 0 0 6px 0;
+    font-family: var(--font-display);
+    font-size: 16px;
+}
+
+.invite-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
 }

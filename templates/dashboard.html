@@ -13,6 +13,28 @@
 
     <main class="dashboard-main">
 
+        {% if pending_invites %}
+        <section class="card">
+            <h2>Pending Team Invites</h2>
+            {% for invite in pending_invites %}
+            <div class="team-block">
+                <p class="cf-status">
+                    <strong>{{ invite.invited_by_username }}</strong> invited you to join
+                    <strong>{{ invite.team_name }}</strong>
+                </p>
+                <div class="invite-actions">
+                    <form method="POST" action="{{ url_for('accept_invite', invite_id=invite.id) }}">
+                        <button type="submit" class="btn btn-primary btn-small">Accept</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('reject_invite', invite_id=invite.id) }}">
+                        <button type="submit" class="btn btn-outline btn-small">Reject</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </section>
+        {% endif %}
+
         <section class="card cf-card">
             <h2>Codeforces Account</h2>
             {% if user.codeforces_handle %}

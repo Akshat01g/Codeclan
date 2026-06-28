@@ -114,10 +114,20 @@ def dashboard():
     )
     contests = cursor.fetchall()
 
+    cursor.execute("""
+        SELECT ti.*, t.team_name, u.username AS invited_by_username
+        FROM team_invites ti
+        JOIN teams t ON t.id = ti.team_id
+        JOIN users u ON u.id = ti.invited_by_user_id
+        WHERE ti.invited_user_id = %s AND ti.status = 'pending'
+        ORDER BY ti.created_at DESC
+    """, (session["user_id"],))
+    pending_invites = cursor.fetchall()
+
     cursor.close()
     conn.close()
 
-    return render_template("dashboard.html", user=user, contests=contests)
+    return render_template("dashboard.html", user=user, contests=contests, pending_invites=pending_invites)
 
 
 @app.route("/create-team", methods=["GET", "POST"])
@@ -191,6 +201,13 @@ def invite_to_team(team_id):
         conn.close()
         return redirect(url_for("my_teams"))
 
+    cursor.execute("SELECT COUNT(*) AS cnt FROM team_members WHERE team_id = %s", (team_id,))
+    member_count = cursor.fetchone()["cnt"]
+    if member_count >= 4:
+        cursor.close()
+        conn.close()
+        return redirect(url_for("my_teams"))
+
     cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
     invited_user = cursor.fetchone()
 
@@ -214,6 +231,55 @@ def invite_to_team(team_id):
     conn.close()
 
     return redirect(url_for("my_teams"))
+
+
+@app.route("/invite/<int:invite_id>/accept", methods=["POST"])
+@login_required
+def accept_invite(invite_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute(
+        "SELECT * FROM team_invites WHERE id = %s AND invited_user_id = %s AND status = 'pending'",
+        (invite_id, session["user_id"])
+    )
+    invite = cursor.fetchone()
+
+    if invite:
+        cursor.execute("SELECT COUNT(*) AS cnt FROM team_members WHERE team_id = %s", (invite["team_id"],))
+        member_count = cursor.fetchone()["cnt"]
+
+        cursor2 = conn.cursor()
+        if member_count < 4:
+            cursor2.execute(
+                "INSERT IGNORE INTO team_members (team_id, user_id) VALUES (%s, %s)",
+                (invite["team_id"], session["user_id"])
+            )
+            cursor2.execute("UPDATE team_invites SET status = 'accepted' WHERE id = %s", (invite_id,))
+        conn.commit()
+        cursor2.close()
+
+    cursor.close()
+    conn.close()
+
+    return redirect(url_for("dashboard"))
+
+
+@app.route("/invite/<int:invite_id>/reject", methods=["POST"])
+@login_required
+def reject_invite(invite_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "UPDATE team_invites SET status = 'rejected' WHERE id = %s AND invited_user_id = %s AND status = 'pending'",
+        (invite_id, session["user_id"])
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return redirect(url_for("dashboard"))
 
 
 @app.route("/sync-codeforces", methods=["POST"])
