@@ -5,10 +5,13 @@ const CF_TOPICS = [
     "two pointers", "constructive algorithms", "geometry", "bitmasks"
 ];
 
+const ALL_TOPICS_LABEL = "All Topics";
+
 const RATING_VALUES = [];
 for (let r = 800; r <= 3500; r += 100) RATING_VALUES.push(r);
 
 const selectedTopics = new Set();
+let allTopicsSelected = true;
 
 document.addEventListener("DOMContentLoaded", function () {
     populateRatingSelects();
@@ -42,17 +45,39 @@ function populateRatingSelects() {
 
 function populateTopicChips() {
     const grid = document.getElementById("topics-grid");
+    grid.innerHTML = "";
+
+    const allChip = document.createElement("div");
+    allChip.className = "topic-chip topic-chip-all selected";
+    allChip.textContent = ALL_TOPICS_LABEL;
+    allChip.addEventListener("click", () => {
+        allTopicsSelected = true;
+        selectedTopics.clear();
+        Array.from(grid.children).forEach(chip => {
+            chip.classList.toggle("selected", chip === allChip);
+        });
+    });
+    grid.appendChild(allChip);
+
     CF_TOPICS.forEach(topic => {
-        const chip = document.createElement("span");
-        chip.textContent = topic + "  ";
-        chip.style.cursor = "pointer";
+        const chip = document.createElement("div");
+        chip.className = "topic-chip";
+        chip.textContent = topic;
         chip.addEventListener("click", () => {
             if (selectedTopics.has(topic)) {
                 selectedTopics.delete(topic);
-                chip.style.fontWeight = "normal";
+                chip.classList.remove("selected");
             } else {
                 selectedTopics.add(topic);
-                chip.style.fontWeight = "bold";
+                chip.classList.add("selected");
+            }
+
+            if (selectedTopics.size > 0) {
+                allTopicsSelected = false;
+                allChip.classList.remove("selected");
+            } else {
+                allTopicsSelected = true;
+                allChip.classList.add("selected");
             }
         });
         grid.appendChild(chip);
@@ -68,13 +93,13 @@ async function handleGenerate() {
     const btn = document.getElementById("generate-btn");
 
     if (ratingMin > ratingMax) {
-        messageBox.textContent = "Min rating cannot be greater than max rating.";
+        showMessage(messageBox, "Min rating cannot be greater than max rating.", "error");
         return;
     }
 
     btn.disabled = true;
     btn.textContent = "Generating...";
-    messageBox.textContent = "Checking problems against your solved history...";
+    showMessage(messageBox, "Checking Codeforces problems against your solved history...", "");
 
     try {
         const response = await fetch("/api/generate-contest", {
@@ -84,22 +109,22 @@ async function handleGenerate() {
                 title: title,
                 rating_min: ratingMin,
                 rating_max: ratingMax,
-                topics: Array.from(selectedTopics),
+                topics: allTopicsSelected ? [] : Array.from(selectedTopics),
                 num_questions: numQuestions
             })
         });
         const data = await response.json();
 
         if (data.success) {
-            messageBox.textContent = "Contest generated! Redirecting...";
+            showMessage(messageBox, "Contest generated! Redirecting...", "success");
             setTimeout(() => {
                 window.location.href = "/contest/" + data.contest_id;
             }, 800);
         } else {
-            messageBox.textContent = data.message;
+            showMessage(messageBox, data.message, "error");
         }
     } catch (err) {
-        messageBox.textContent = "Something went wrong. Please try again.";
+        showMessage(messageBox, "Something went wrong. Please try again.", "error");
     } finally {
         btn.disabled = false;
         btn.textContent = "Generate Contest";

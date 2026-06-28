@@ -35,19 +35,29 @@
         </section>
         {% endif %}
 
-        <section class="card cf-card">
-            <h2>Codeforces Account</h2>
-            {% if user.codeforces_handle %}
-                <p class="cf-status">
-                    Linked handle: <strong>{{ user.codeforces_handle }}</strong>
-                    {% if user.cf_rating %} &middot; Rating: <strong>{{ user.cf_rating }}</strong>{% endif %}
-                </p>
-                <p class="cf-synced">
-                    Last synced: {{ user.cf_last_synced if user.cf_last_synced else "Never" }}
-                </p>
-            {% else %}
-                <p class="cf-status">No Codeforces handle linked yet. Link one to start creating contests.</p>
-            {% endif %}
+        <section class="card profile-card">
+            <div class="profile-header">
+                <div class="profile-info">
+                    <h2 class="profile-name">{{ user.username }}</h2>
+                    <p class="profile-email">{{ user.email }}</p>
+                </div>
+            </div>
+
+            <div class="profile-cf-row">
+                <div class="profile-cf-detail">
+                    <span class="profile-label">Codeforces Handle</span>
+                    <span class="profile-value">{{ user.codeforces_handle or "Not linked" }}</span>
+                </div>
+                <div class="profile-cf-detail">
+                    <span class="profile-label">Rating</span>
+                    <span class="profile-value">{{ user.cf_rating or "—" }}</span>
+                </div>
+                <div class="profile-cf-detail">
+                    <span class="profile-label">Last Synced</span>
+                    <span class="profile-value">{{ user.cf_last_synced if user.cf_last_synced else "Never" }}</span>
+                </div>
+                <br> </br>
+            </div>
 
             <form id="cf-sync-form" class="cf-sync-form">
                 <input type="text" id="cf-handle-input" name="handle"
@@ -62,15 +72,17 @@
 
         <section class="action-grid">
             <a href="{{ url_for('create_contest_page') }}" class="card action-card">
+                <div class="action-card-icon"></div>
                 <h3>Build a Contest</h3>
                 <p>Pick a rating range and topics. We'll generate 5-7 problems you haven't solved before.</p>
-                <span class="action-arrow">Create →</span>
+                <span class="action-arrow">Create a Contest →</span>
             </a>
 
             <a href="{{ url_for('create_team') }}" class="card action-card">
+                <div class="action-card-icon"></div>
                 <h3>Teams</h3>
                 <p>Create or join a team of 3-4 members for upcoming team contests.</p>
-                <span class="action-arrow">Create a Team →</span>
+                <span class="action-arrow">Manage Teams →</span>
             </a>
         </section>
 
