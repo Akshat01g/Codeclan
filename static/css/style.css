@@ -451,3 +451,31 @@ input:focus, select:focus {
 .topic-chip-all {
     font-weight: 700;
 }
+
+.hidden {
+    display: none !important;
+}
+.mode-toggle {
+    display: flex;
+    gap: 10px;
+}
+.mode-btn {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-panel-alt);
+    color: var(--text-dim);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.12s ease;
+}
+.mode-btn:hover {
+    border-color: var(--accent);
+}
+.mode-btn.selected {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent-dim);
+}

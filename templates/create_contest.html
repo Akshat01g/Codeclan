@@ -25,23 +25,6 @@
                 <input type="text" id="title" placeholder="e.g. My Sunday Practice Set">
             </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="rating_min">Min Rating</label>
-                    <select id="rating_min"></select>
-                </div>
-                <div class="form-group">
-                    <label for="rating_max">Max Rating</label>
-                    <select id="rating_max"></select>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Topics <span class="label-hint">(select one or more, or leave empty for any)</span></label>
-                <div class="topics-grid" id="topics-grid">
-                </div>
-            </div>
-
             <div class="form-group">
                 <label for="num_questions">Number of Questions</label>
                 <select id="num_questions">
@@ -49,6 +32,42 @@
                     <option value="6">6</option>
                     <option value="7">7</option>
                 </select>
+            </div>
+
+            <div class="form-group">
+                <label>Rating Mode</label>
+                <div class="mode-toggle">
+                    <button type="button" class="mode-btn selected" id="mode-range-btn" data-mode="range">
+                        Same Range for All
+                    </button>
+                    <button type="button" class="mode-btn" id="mode-individual-btn" data-mode="individual">
+                        Set Each Question Individually
+                    </button>
+                </div>
+            </div>
+
+            <div id="range-mode-section">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="rating_min">Min Rating</label>
+                        <select id="rating_min"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="rating_max">Max Rating</label>
+                        <select id="rating_max"></select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Topics <span class="label-hint">(pick "All Topics" or select specific tags)</span></label>
+                    <div class="topics-grid" id="topics-grid">
+                    </div>
+                </div>
+            </div>
+
+            <div id="individual-mode-section" class="hidden">
+                <div id="individual-questions-container">
+                </div>
             </div>
 
             <button id="generate-btn" class="btn btn-primary btn-full" {% if not user.codeforces_handle %}disabled{% endif %}>

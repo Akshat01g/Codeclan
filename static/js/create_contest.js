@@ -12,16 +12,30 @@ for (let r = 800; r <= 3500; r += 100) RATING_VALUES.push(r);
 
 const selectedTopics = new Set();
 let allTopicsSelected = true;
+let currentMode = "range";
 
 document.addEventListener("DOMContentLoaded", function () {
     populateRatingSelects();
     populateTopicChips();
+
+    document.getElementById("mode-range-btn").addEventListener("click", () => switchMode("range"));
+    document.getElementById("mode-individual-btn").addEventListener("click", () => switchMode("individual"));
 
     const generateBtn = document.getElementById("generate-btn");
     if (generateBtn) {
         generateBtn.addEventListener("click", handleGenerate);
     }
 });
+
+function switchMode(mode) {
+    currentMode = mode;
+
+    document.getElementById("mode-range-btn").classList.toggle("selected", mode === "range");
+    document.getElementById("mode-individual-btn").classList.toggle("selected", mode === "individual");
+
+    document.getElementById("range-mode-section").classList.toggle("hidden", mode !== "range");
+    document.getElementById("individual-mode-section").classList.toggle("hidden", mode !== "individual");
+}
 
 function populateRatingSelects() {
     const minSelect = document.getElementById("rating_min");
@@ -86,11 +100,17 @@ function populateTopicChips() {
 
 async function handleGenerate() {
     const title = document.getElementById("title").value.trim();
-    const ratingMin = parseInt(document.getElementById("rating_min").value);
-    const ratingMax = parseInt(document.getElementById("rating_max").value);
     const numQuestions = parseInt(document.getElementById("num_questions").value);
     const messageBox = document.getElementById("generate-message");
     const btn = document.getElementById("generate-btn");
+
+    if (currentMode === "individual") {
+        showMessage(messageBox, "Individual mode is coming in a future update. Please use 'Same Range for All' for now.", "error");
+        return;
+    }
+
+    const ratingMin = parseInt(document.getElementById("rating_min").value);
+    const ratingMax = parseInt(document.getElementById("rating_max").value);
 
     if (ratingMin > ratingMax) {
         showMessage(messageBox, "Min rating cannot be greater than max rating.", "error");

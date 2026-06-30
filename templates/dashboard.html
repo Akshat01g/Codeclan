@@ -56,7 +56,6 @@
                     <span class="profile-label">Last Synced</span>
                     <span class="profile-value">{{ user.cf_last_synced if user.cf_last_synced else "Never" }}</span>
                 </div>
-                <br> </br>
             </div>
 
             <form id="cf-sync-form" class="cf-sync-form">
@@ -72,14 +71,14 @@
 
         <section class="action-grid">
             <a href="{{ url_for('create_contest_page') }}" class="card action-card">
-                <div class="action-card-icon"></div>
+                
                 <h3>Build a Contest</h3>
                 <p>Pick a rating range and topics. We'll generate 5-7 problems you haven't solved before.</p>
                 <span class="action-arrow">Create a Contest →</span>
             </a>
 
             <a href="{{ url_for('create_team') }}" class="card action-card">
-                <div class="action-card-icon"></div>
+                
                 <h3>Teams</h3>
                 <p>Create or join a team of 3-4 members for upcoming team contests.</p>
                 <span class="action-arrow">Manage Teams →</span>
