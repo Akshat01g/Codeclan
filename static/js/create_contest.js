@@ -14,12 +14,19 @@ const selectedTopics = new Set();
 let allTopicsSelected = true;
 let currentMode = "range";
 
+let individualQuestionState = [];
+
 document.addEventListener("DOMContentLoaded", function () {
     populateRatingSelects();
-    populateTopicChips();
+    populateTopicChipsInto(document.getElementById("topics-grid"), selectedTopics,
+        () => allTopicsSelected, (v) => { allTopicsSelected = v; });
 
     document.getElementById("mode-range-btn").addEventListener("click", () => switchMode("range"));
     document.getElementById("mode-individual-btn").addEventListener("click", () => switchMode("individual"));
+
+    document.getElementById("num_questions").addEventListener("change", () => {
+        if (currentMode === "individual") buildIndividualQuestionForm();
+    });
 
     const generateBtn = document.getElementById("generate-btn");
     if (generateBtn) {
@@ -35,6 +42,10 @@ function switchMode(mode) {
 
     document.getElementById("range-mode-section").classList.toggle("hidden", mode !== "range");
     document.getElementById("individual-mode-section").classList.toggle("hidden", mode !== "individual");
+
+    if (mode === "individual") {
+        buildIndividualQuestionForm();
+    }
 }
 
 function populateRatingSelects() {
@@ -57,16 +68,15 @@ function populateRatingSelects() {
     maxSelect.value = 1200;
 }
 
-function populateTopicChips() {
-    const grid = document.getElementById("topics-grid");
+function populateTopicChipsInto(grid, selectedSet, getAllFlag, setAllFlag) {
     grid.innerHTML = "";
 
     const allChip = document.createElement("div");
-    allChip.className = "topic-chip topic-chip-all selected";
+    allChip.className = "topic-chip topic-chip-all" + (getAllFlag() ? " selected" : "");
     allChip.textContent = ALL_TOPICS_LABEL;
     allChip.addEventListener("click", () => {
-        allTopicsSelected = true;
-        selectedTopics.clear();
+        setAllFlag(true);
+        selectedSet.clear();
         Array.from(grid.children).forEach(chip => {
             chip.classList.toggle("selected", chip === allChip);
         });
@@ -78,23 +88,86 @@ function populateTopicChips() {
         chip.className = "topic-chip";
         chip.textContent = topic;
         chip.addEventListener("click", () => {
-            if (selectedTopics.has(topic)) {
-                selectedTopics.delete(topic);
+            if (selectedSet.has(topic)) {
+                selectedSet.delete(topic);
                 chip.classList.remove("selected");
             } else {
-                selectedTopics.add(topic);
+                selectedSet.add(topic);
                 chip.classList.add("selected");
             }
 
-            if (selectedTopics.size > 0) {
-                allTopicsSelected = false;
+            if (selectedSet.size > 0) {
+                setAllFlag(false);
                 allChip.classList.remove("selected");
             } else {
-                allTopicsSelected = true;
+                setAllFlag(true);
                 allChip.classList.add("selected");
             }
         });
         grid.appendChild(chip);
+    });
+}
+
+function buildIndividualQuestionForm() {
+    const numQuestions = parseInt(document.getElementById("num_questions").value);
+    const container = document.getElementById("individual-questions-container");
+    container.innerHTML = "";
+
+    const newState = [];
+    for (let i = 0; i < numQuestions; i++) {
+        if (individualQuestionState[i]) {
+            newState.push(individualQuestionState[i]);
+        } else {
+            newState.push({ rating: 1200, allTopics: true, topics: new Set() });
+        }
+    }
+    individualQuestionState = newState;
+
+    individualQuestionState.forEach((state, idx) => {
+        const block = document.createElement("div");
+        block.className = "individual-question-block";
+
+        const heading = document.createElement("h4");
+        heading.textContent = `Question ${idx + 1}`;
+        block.appendChild(heading);
+
+        const ratingGroup = document.createElement("div");
+        ratingGroup.className = "form-group";
+        const ratingLabel = document.createElement("label");
+        ratingLabel.textContent = "Rating";
+        const ratingSelect = document.createElement("select");
+        RATING_VALUES.forEach(r => {
+            const opt = document.createElement("option");
+            opt.value = r;
+            opt.textContent = r;
+            if (r === state.rating) opt.selected = true;
+            ratingSelect.appendChild(opt);
+        });
+        ratingSelect.addEventListener("change", () => {
+            state.rating = parseInt(ratingSelect.value);
+        });
+        ratingGroup.appendChild(ratingLabel);
+        ratingGroup.appendChild(ratingSelect);
+        block.appendChild(ratingGroup);
+
+        const topicsGroup = document.createElement("div");
+        topicsGroup.className = "form-group";
+        const topicsLabel = document.createElement("label");
+        topicsLabel.textContent = "Topics";
+        const topicsGrid = document.createElement("div");
+        topicsGrid.className = "topics-grid";
+        topicsGroup.appendChild(topicsLabel);
+        topicsGroup.appendChild(topicsGrid);
+        block.appendChild(topicsGroup);
+
+        populateTopicChipsInto(
+            topicsGrid,
+            state.topics,
+            () => state.allTopics,
+            (v) => { state.allTopics = v; }
+        );
+
+        container.appendChild(block);
     });
 }
 
@@ -104,17 +177,29 @@ async function handleGenerate() {
     const messageBox = document.getElementById("generate-message");
     const btn = document.getElementById("generate-btn");
 
-    if (currentMode === "individual") {
-        showMessage(messageBox, "Individual mode is coming in a future update. Please use 'Same Range for All' for now.", "error");
-        return;
-    }
+    let payload = {
+        title: title,
+        num_questions: numQuestions,
+        mode: currentMode
+    };
 
-    const ratingMin = parseInt(document.getElementById("rating_min").value);
-    const ratingMax = parseInt(document.getElementById("rating_max").value);
+    if (currentMode === "range") {
+        const ratingMin = parseInt(document.getElementById("rating_min").value);
+        const ratingMax = parseInt(document.getElementById("rating_max").value);
 
-    if (ratingMin > ratingMax) {
-        showMessage(messageBox, "Min rating cannot be greater than max rating.", "error");
-        return;
+        if (ratingMin > ratingMax) {
+            showMessage(messageBox, "Min rating cannot be greater than max rating.", "error");
+            return;
+        }
+
+        payload.rating_min = ratingMin;
+        payload.rating_max = ratingMax;
+        payload.topics = allTopicsSelected ? [] : Array.from(selectedTopics);
+    } else {
+        payload.questions = individualQuestionState.map(state => ({
+            rating: state.rating,
+            topics: state.allTopics ? [] : Array.from(state.topics)
+        }));
     }
 
     btn.disabled = true;
@@ -125,13 +210,7 @@ async function handleGenerate() {
         const response = await fetch("/api/generate-contest", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                title: title,
-                rating_min: ratingMin,
-                rating_max: ratingMax,
-                topics: allTopicsSelected ? [] : Array.from(selectedTopics),
-                num_questions: numQuestions
-            })
+            body: JSON.stringify(payload)
         });
         const data = await response.json();
 

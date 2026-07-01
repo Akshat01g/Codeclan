@@ -479,3 +479,17 @@ input:focus, select:focus {
     border-color: var(--accent);
     color: var(--accent-dim);
 }
+
+.individual-question-block {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    background: var(--bg-panel-alt);
+}
+.individual-question-block h4 {
+    margin: 0 0 12px 0;
+    font-family: var(--font-display);
+    font-size: 14px;
+    color: var(--accent-dim);
+}
